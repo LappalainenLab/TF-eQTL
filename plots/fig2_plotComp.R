@@ -12,7 +12,7 @@ library(ggplot2)
 library(tibble)
 library(heatmap3)
 
-setwd("~/projects/MANUSCRIPT/")
+setwd("~/projects/MANUSCRIPT_revisions/")
 
 
 tf_info = read.table("../TFi-eQTL/input_files/TFs.info.curated.txt",
@@ -25,23 +25,23 @@ genes = read.table("data_tables/variant_sets/caviar_chipseq_motif_variants.MAF05
   summarize(num=n())
 
 
-fi_tsts_fdr20 = read.table("data_tables/combine_corrs/fi_tsts_win_fdr20.txt",
+fi_tsts_fdr05 = read.table("data_tables/tf_eqtls/fi_tsts_win_fdr05_new.txt",
                            header=TRUE,sep='\t')
-fi_tsts_cross = read.table("data_tables/combine_corrs/fi_tsts_expr_prot.txt",
+fi_tsts_cross = read.table("data_tables/tf_eqtls/fi_tsts_expr_prot_new.txt",
                            header=TRUE,sep='\t')
 
 
-fi_tsts_fdr20_mat = fi_tsts_fdr20 %>%
+fi_tsts_fdr05_mat = fi_tsts_fdr05 %>%
   select(c(tiss1,tiss2,'fi_logor')) %>%
   pivot_wider(names_from=tiss2,
               values_from=fi_logor) %>%
   column_to_rownames("tiss1") %>%
   as.matrix()
-fi_tsts_fdr20_mat_mod = apply(fi_tsts_fdr20_mat, c(1,2), function(x) {
-  max(min(x, 13), 0)
+fi_tsts_fdr05_mat_mod = apply(fi_tsts_fdr05_mat, c(1,2), function(x) {
+  max(min(x, 12), 0)
 })
 pdf(file = "plots/fig2_win_comp.pdf",width=5,height=5)
-heatmap3(fi_tsts_fdr20_mat_mod,
+heatmap3(fi_tsts_fdr05_mat_mod,
          showColDendro = FALSE,
          scale='none', balanceColor = TRUE,
          method='ward.D2')
