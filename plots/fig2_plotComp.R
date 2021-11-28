@@ -50,10 +50,10 @@ dev.off()
 all_cross_tsts_winorder = fi_tsts_cross %>%
   mutate(tiss1 = factor(tiss1, 
                         levels=c('cross','prot',
-                                 'SPLEEN','LIVER','PNCREAS','PTTARY','NERVET','ARTTBL',
-                                 'THYROID','ESPMSL','MSCLSK',
-                                 'ADPSBQ','LCL','LUNG','SKINS',
-                                 'BRNCTXA','BRNCHA','BRNNCC'))) %>%
+                                 'PTTARY', 'LCL', 'SKINS', 'ADPSBQ', 'ARTTBL',
+                                 'SPLEEN', 'THYROID', 'LUNG', 
+                                 'PNCREAS', 'LIVER', 'NERVET', 'ESPMSL', 'MSCLSK',
+                                 'BRNCHA','BRNCTXA','BRNNCC'))) %>%
   arrange(tiss1)
 all_cross_tsts_winorder_mat = all_cross_tsts_winorder %>%
   filter(tiss2 %in% c('cross','prot')) %>%
@@ -63,7 +63,7 @@ all_cross_tsts_winorder_mat = all_cross_tsts_winorder %>%
   column_to_rownames("tiss1") %>%
   as.matrix()
 all_cross_tsts_winorder_mat_mod = apply(all_cross_tsts_winorder_mat, c(1,2), function(x) {
-  max(min(x, 13), -3)
+  max(min(x, 12), -3)
 })
 
 pdf(file="plots/fig2_cross_comp.pdf",width=5,height=5)
