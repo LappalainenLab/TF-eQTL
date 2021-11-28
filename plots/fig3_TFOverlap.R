@@ -12,9 +12,10 @@ library(tidyr)
 library(ggrepel)
 
 
-setwd("~/projects/MANUSCRIPT/")
+setwd("~/projects/MANUSCRIPT_revisions/")
 
-perm_files=list.files("data_tables/overlap","perms.*",
+perm_files=list.files("data_tables/overlap/chipseq_motif",
+                      "perms.*",
                       full.names = TRUE)
 
 
@@ -44,30 +45,35 @@ overlap_sum = do.call('rbind', lapply(perm_files, function(filei) {
               perm_sd = sqrt(var(stat)),
               perm_z = ( unique(real) - perm_mean ) / perm_sd ) %>%
     separate(name,c("eq",'data_type')) %>%
-    mutate(file = strsplit(filei,'[/]')[[1]][3],
+    mutate(file = strsplit(filei,'[/]')[[1]][4],
+           list = factor( ifelse(file == "perms.all.16tiss.fdr05.txt", 'within',
+                                ifelse(file=="perms.sig_assoc.fdr05.cross_hits.txt", 'cross_expr',
+                                       ifelse(file=="perms.sig_prot_corrs.fdr05.cols.txt", 'cross_prot',
+                                              ifelse(file=="perms.sig_prot_corrs.fdr05.cols.filtered.txt", 'cross_prot_filt',
+                                                     ifelse(file=='perms.multi_within_tiss_corrs_fdr05.txt', 'multi_within',
+                                                            ifelse(file=='perms.within_cross_corrs.txt', 'within_cross',
+                                                                   ifelse(file=='perms.multi_or_with_cross_corrs.txt', 'multi_or_cross', 'err'))))))),
+                          levels=c('within','cross_expr','cross_prot','cross_prot_filt','multi_within','within_cross','multi_or_cross')),
            data = paste(eq,data_type,var),
            data_type = factor(data_type,
                               levels = c('chip','motif','both')))
-}))
-
-overlap_sum %>%
-  separate(file,into=c(NA,NA,NA,"list",NA),sep='[.]',remove = FALSE) %>%
-  mutate(list = factor(list, 
-                       levels=c('cross_hits','protein_hits_filtered','any_tiss_hits','tiss_cross_hits','multi_tiss_hits','multi_or_cross_hits')),
-         list_lab = factor(ifelse(list == 'cross_hits', 'Cross\nExpr',
-                                  ifelse(list=='protein_hits_filtered','Cross\nProt',
-                                         ifelse(list=='any_tiss_hits','\nWithin\n',
-                                                ifelse(list=='multi_or_cross_hits','2+ Within\nor\nWithin + Cross','')))),
-                           levels=c('Cross\nExpr','Cross\nProt','\nWithin\n','2+ Within\nor\nWithin + Cross')),
-         data_type_lab = factor(ifelse(data_type == 'chip', 'ChIPseq Overlap',
-                                       ifelse(data_type == 'motif','Motif Overlap',
-                                              ifelse(data_type == 'both','Both Overlap',''))),
-                                levels=c('ChIPseq Overlap','Motif Overlap','Both Overlap'))) %>%
+}))  %>%
+  mutate(list_lab = factor(ifelse(list == 'cross_expr', 'Cross\nExpr',
+                             ifelse(list=='cross_prot','Cross\nProt',
+                                    ifelse(list=='within','\nWithin\n',
+                                           ifelse(list=='multi_or_cross','2+ Within\nor\nWithin + Cross','')))),
+                      levels=c('\nWithin\n','Cross\nExpr','Cross\nProt','2+ Within\nor\nWithin + Cross')),
+    data_type_lab = factor(ifelse(data_type == 'chip', 'ChIPseq Overlap',
+                                  ifelse(data_type == 'motif','Motif Overlap',
+                                         ifelse(data_type == 'both','Both Overlap',''))),
+                           levels=c('ChIPseq Overlap','Motif Overlap','Both Overlap'))) %>%
   filter(!is.na(list)) %>%
   mutate(p_lab = ifelse(perm_p < 0.0002, "p < 2e-04",
                         ifelse(perm_p < 0.001, paste('p =',format(round(perm_p,4),scientific = FALSE)),
                                ifelse(perm_p < 0.005, paste('p =',format(round(perm_p,3),scientific = FALSE)),
-                                      paste('p =',round(perm_p,2))))) ) %>%
+                                      paste('p =',round(perm_p,2))))) )
+
+overlap_sum %>%
   filter(eq=='eq2',
          var == 'true_stat') %>%
   ggplot(aes(list, real)) +
@@ -76,7 +82,7 @@ overlap_sum %>%
   geom_point(col='darkorchid4') +
   geom_point(aes(list,ifelse(real > 0, real*1.5, real)),col=NA) +
   geom_text(aes(list,
-                rep(c(0.002,0.09,0.006),6),
+                rep(c(0.002,0.09,0.006),7),
                 label=p_lab),
             size=3) +
   facet_wrap(~data_type_lab, scales='free_y', nrow=3) +
@@ -87,33 +93,16 @@ overlap_sum %>%
 
 
 overlap_sum %>%
-  separate(file,into=c(NA,NA,NA,"list",NA),sep='[.]',remove = FALSE) %>%
-  mutate(list = factor(list, 
-                       levels=c('any_tiss_hits','cross_hits','protein_hits_filtered','multi_or_cross_hits')),
-         list_lab = factor(ifelse(list == 'cross_hits', 'Cross\nExpr',
-                                  ifelse(list=='protein_hits_filtered','Cross\nProt',
-                                         ifelse(list=='any_tiss_hits','\nWithin\n',
-                                                ifelse(list=='multi_or_cross_hits','2+ Within\nor\nWithin + Cross','')))),
-                           levels=c('\nWithin\n','Cross\nExpr','Cross\nProt','2+ Within\nor\nWithin + Cross')),
-         data_type_lab = factor(ifelse(data_type == 'chip', 'ChIPseq Overlap',
-                                       ifelse(data_type == 'motif','Motif Overlap',
-                                              ifelse(data_type == 'both','Both Overlap',''))),
-                                levels=c('ChIPseq Overlap','Motif Overlap','Both Overlap'))) %>%
-  filter(!is.na(list),
-         data_type != 'both') %>%
-  mutate(p_lab = ifelse(perm_p < 0.0002, "p < 2e-04",
-                        ifelse(perm_p < 0.001, paste('p =',format(round(perm_p,4),scientific = FALSE)),
-                               ifelse(perm_p < 0.005, paste('p =',format(round(perm_p,3),scientific = FALSE)),
-                                      paste('p =',round(perm_p,2))))) ) %>%
   filter(eq=='eq2',
-         var == 'true_stat') %>%
+         var == 'true_stat',
+         !is.na(list_lab)) %>%
   ggplot(aes(list_lab, real)) +
   geom_col(width=.02) +
   geom_hline(yintercept=0) +
   geom_point(col='darkorchid4') +
   geom_point(aes(list_lab,ifelse(real > 0, real*1.5, real)),col=NA) +
   geom_text(aes(list_lab,
-                rep(c(0.07,0.0035),4),
+                rep(c(0.003,0.12,0.003),4),
                 label=p_lab),
             size=3) +
   facet_wrap(~data_type_lab, scales='free_y', nrow=3) +
@@ -126,19 +115,7 @@ ggsave("plots/fig3_overlap.pdf",
 
 
 overlap_sum %>%
-  separate(file,into=c(NA,NA,NA,"list",NA),sep='[.]',remove = FALSE) %>%
-  mutate(list = factor(list, 
-                       levels=c('any_tiss_hits','cross_hits','protein_hits_filtered','multi_or_cross_hits')),
-         list_lab = factor(ifelse(list == 'cross_hits', 'Cross\nExpr',
-                                  ifelse(list=='protein_hits_filtered','Cross\nProt',
-                                         ifelse(list=='any_tiss_hits','\nWithin\n',
-                                                ifelse(list=='multi_or_cross_hits','2+ Within\nor\nWithin + Cross','')))),
-                           levels=c('\nWithin\n','Cross\nExpr','Cross\nProt','2+ Within\nor\nWithin + Cross')),
-         data_type_lab = factor(ifelse(data_type == 'chip', 'ChIPseq Overlap',
-                                       ifelse(data_type == 'motif','Motif Overlap',
-                                              ifelse(data_type == 'both','Both Overlap',''))),
-                                levels=c('ChIPseq Overlap','Motif Overlap','Both Overlap'))) %>%
-  filter(!is.na(list),
+  filter(!is.na(list_lab),
          data_type != 'both') %>%
   mutate(p_lab = ifelse(perm_p < 0.0002, "p < 2e-04",
                         ifelse(perm_p < 0.001, paste('p =',format(round(perm_p,4),scientific = FALSE)),
@@ -152,7 +129,7 @@ overlap_sum %>%
   geom_point(aes(col=list_lab)) +
   geom_point(aes(list_lab,ifelse(real > 0, real*1.5, real)),col=NA) +
   geom_text(aes(list_lab,
-                rep(c(0.07,0.0035),4),
+                rep(c(0.12,0.003),4),
                 label=p_lab),
             size=3) +
   facet_wrap(~data_type_lab, scales='free_y', nrow=3) +
@@ -167,19 +144,7 @@ ggsave("plots/fig3_overlap_col.pdf",
 
 overlap_sum %>%
   filter(data_type=='chip') %>%
-  separate(file,into=c(NA,NA,NA,"list",NA),sep='[.]',remove = FALSE) %>%
-  mutate(list = factor(list, 
-                       levels=c('any_tiss_hits','cross_hits','protein_hits_filtered','multi_or_cross_hits')),
-         list_lab = factor(ifelse(list == 'cross_hits', 'Cross\nExpr',
-                                  ifelse(list=='protein_hits_filtered','Cross\nProt',
-                                         ifelse(list=='any_tiss_hits','\nWithin\n',
-                                                ifelse(list=='multi_or_cross_hits','2+ Within\nor\nWithin + Cross','')))),
-                           levels=c('\nWithin\n','Cross\nExpr','Cross\nProt','2+ Within\nor\nWithin + Cross')),
-         data_type_lab = factor(ifelse(data_type == 'chip', 'ChIPseq Overlap',
-                                       ifelse(data_type == 'motif','Motif Overlap',
-                                              ifelse(data_type == 'both','Both Overlap',''))),
-                                levels=c('ChIPseq Overlap','Motif Overlap','Both Overlap'))) %>%
-  filter(!is.na(list),
+  filter(!is.na(list_lab),
          data_type != 'both') %>%
   mutate(p_lab = ifelse(perm_p < 0.0002, "p < 2e-04",
                         ifelse(perm_p < 0.001, paste('p =',format(round(perm_p,4),scientific = FALSE)),
@@ -193,7 +158,7 @@ overlap_sum %>%
   geom_point(aes(col=list_lab)) +
   geom_point(aes(list_lab,ifelse(real > 0, real*1.5, real)),col=NA) +
   geom_text(aes(list_lab,
-                rep(c(0.07),4),
+                rep(c(0.11),4),
                 label=p_lab),
             size=3) +
   theme_classic() +
@@ -210,9 +175,9 @@ ggsave("plots/fig3_overlap_col_chip.pdf",
 
 ######## SUPPL FIG STUFF (IRF1)
 
-moc_tf_eq2_chip = read.table("~/projects/overlap/sum_stats3/multi_or_cross_hits.eq2_true.tf_chipseq_stats.txt",
+moc_tf_eq2_chip = read.table("~/projects/overlap_revisions2/sum_stats3/multi_or_cross_hits.eq2_true.tf_chipseq_stats.txt",
                              header=TRUE,sep='\t')
-moc_tf_eq2_mot = read.table("~/projects/overlap/sum_stats3/multi_or_cross_hits.eq2_true.tf_motif_stats.txt",
+moc_tf_eq2_mot = read.table("~/projects/overlap_revisions2/sum_stats3/multi_or_cross_hits.eq2_true.tf_motif_stats.txt",
                              header=TRUE,sep='\t')
 
 merge(moc_tf_eq2_chip, moc_tf_eq2_mot,

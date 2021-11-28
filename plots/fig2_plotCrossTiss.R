@@ -13,14 +13,14 @@ library(qvalue)
 library(ggrepel)
 library(ggbeeswarm)
 
-setwd("~/projects/MANUSCRIPT/")
+setwd("~/projects/MANUSCRIPT_revisions/")
 
-cor_info = read.table("../prot_corrs/tf_measurements/expr_protein_corr.txt",
+cor_info = read.table("data_tables/tf_eqtls/expr_protein_corr.txt",
                        header=TRUE, sep='\t')
 
-expr_hits = read.table("data_tables/cross_tiss_corrs/cross_corrs_fdr05.txt",
+expr_hits = read.table("data_tables/tf_eqtls/sig_assoc.fdr05.cross_hits.txt",
                        header=TRUE, sep='\t')
-prot_hits = read.table("../overlap/replication/sig_assoc.fdr20.protein_hits_filtered.txt",
+prot_hits = read.table("data_tables/tf_eqtls/sig_prot_corrs.fdr05.cols.filtered.txt",
                        header=TRUE, sep='\t')
 
 prot_hits_sum = prot_hits %>%
@@ -40,26 +40,26 @@ both_hits_sum_plotting = both_hits_sum %>%
   pivot_wider(id_cols=c('tf','sp_rho'),
               names_from='data',
               values_from='num_sig') %>%
-  mutate(prot=ifelse(is.na(prot),-500,prot),
-         sp_rho_plot=ifelse(prot==-500,NA,sp_rho))
+  mutate(prot=ifelse(is.na(prot),-100,prot),
+         sp_rho_plot=ifelse(prot==-100,NA,sp_rho))
 
 both_hits_sum_plotting %>%
   ggplot(aes(prot,expr)) +
-  geom_text_repel(aes(label=ifelse(expr>8000|prot>1000,as.character(tf),'')),
-                  size=3,nudge_x = 200) +
+  geom_text_repel(aes(label=ifelse(expr>8000|prot>100,as.character(tf),'')),
+                  size=3,nudge_x = 20) +
   geom_point(aes(fill=sp_rho_plot),shape=21,size=2.5) +
   theme_classic() +
   ylab("Expression-based at 5% FDR") +
-  xlab("Protein-based at 20% FDR") +
+  xlab("Protein-based at 5% FDR") +
   theme(legend.position = c(0.8, 0.7),
         legend.text = element_text(size=6),
         legend.title = element_text(size=9)) +
   scale_fill_gradient2(low='blue',mid='white',high='red', 
                        guide = guide_colorbar(barwidth = .5, barheight = 3)) +
   labs(fill=element_text("Expr:Prot rho")) +
-  scale_x_continuous(breaks=c(-500,0,1000,2000,3000),
-                     labels=c("NA", "0", "1000",'2000','3000'),
-                     limits = c(-500,3800))
+  scale_x_continuous(breaks=c(-100,0,100,200,300,400,500,600),
+                     labels=c("NA", "0", "100",'200','300','400','500','600'),
+                     limits = c(-100,600))
 ggsave("plots/fig2_cross_tiss.pdf",
        height=3, width=3.5)
 
@@ -110,13 +110,13 @@ both_hits_sum %>%
         axis.title.y = element_text(size=12)) +
   ylab('Cross-tissue TF-eQTLs')
 both_hits_sum %>%
-  mutate(xnames=ifelse(data=='expr',"Expression\n5% FDR",
-                       "Protein\n20% FDR")) %>%
+  mutate(xnames=ifelse(data=='expr',"Expression",
+                       "Protein")) %>%
   ggplot(aes(xnames,num_sig)) +
   geom_quasirandom(aes(xnames,num_sig),
              size=.5) +
   geom_text_repel(aes(label=ifelse(data=='expr'&num_sig>8000,as.character(tf),
-                                   ifelse(data=='prot'&num_sig>1000,as.character(tf),
+                                   ifelse(data=='prot'&num_sig>100,as.character(tf),
                                           '')))) +
   theme_classic() +
   theme(legend.position = 'none',

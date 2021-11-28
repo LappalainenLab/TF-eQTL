@@ -9,7 +9,7 @@ library(UpSetR)
 library(dplyr)
 library(ggplot2)
 
-setwd("~/projects/MANUSCRIPT/")
+setwd("~/projects/MANUSCRIPT_revisions/")
 
 mpileups_comb_fi_test = read.table("data_tables/IRF1_kd/Fi_tst_combined_byvar_timecomb.allgenes.txt",
                                    header=TRUE, sep='\t')
@@ -19,17 +19,17 @@ mpileups_comb_fi_test_lowp = read.table("data_tables/IRF1_kd/Fi_tst_combined_byv
 tested_genes = as.character(unique(mpileups_comb_fi_test$gene))
 HEK_lowp_genes = as.character(unique(mpileups_comb_fi_test_lowp$gene))
 
-IRF1_hits_cross = read.table("../overlap/replication/sig_assoc.fdr05.cross_hits.txt",
+IRF1_hits_cross = read.table("data_tables/tf_eqtls/sig_assoc.fdr05.cross_hits.txt",
                              header=TRUE,sep='\t') %>%
   filter(phenotype_id %in% tested_genes,
          tf=='IRF1')
 
-IRF1_hits_within = read.table("../overlap/replication/sig_assoc.fdr20.any_tiss_hits.txt",
+IRF1_hits_within = read.table("data_tables/tf_eqtls/all.16tiss.fdr05.eqtl_sig.txt",
                               header=TRUE, sep='\t' ) %>%
   filter(phenotype_id %in% tested_genes,
          tf=='IRF1')
 
-IRF1_hits_multiorcross = read.table("../overlap/replication/sig_assoc.fdr20.multi_or_cross_hits.txt",
+IRF1_hits_multiorcross = read.table("data_tables/tf_eqtls/dual_evidence_tfeqtls.txt",
                                     header=TRUE, sep='\t') %>%
   filter(phenotype_id %in% tested_genes,
          tf=='IRF1')

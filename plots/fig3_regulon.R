@@ -11,11 +11,11 @@ library(ggplot2)
 library(tidyr)
 
 
-setwd("~/projects/MANUSCRIPT/")
+setwd("~/projects/MANUSCRIPT_revisions/")
 
-reg_fi_tsts_bycat = read.table("data_tables/overlap/regulon_enrich_bycat.txt",
+reg_fi_tsts_bycat = read.table("data_tables/overlap/regulon/regulon_enrich_bycat.txt",
                                header=TRUE,sep='\t')
-reg_fi_tsts_overall = read.table("data_tables/overlap/regulon_enrich_overall.txt",
+reg_fi_tsts_overall = read.table("data_tables/overlap/regulon/regulon_enrich_overall.txt",
                                  header=TRUE,sep='\t')
 
 set.seed(100)
