@@ -34,7 +34,8 @@ reg_fi_tsts_bycat %>%
              aes(reg_lab,fi_log_OR),
              size=2) +
   scale_color_gradientn(colors=c('gray','darkorchid4','darkorchid4','darkorchid4'),
-                        limits=c(0,10)) +
+                        limits=c(0,10),
+                        breaks=c(0,3,6,9)) +
   theme_classic() +
   scale_y_continuous(labels=c('-Inf',-2,0,2,4,6),
                      breaks=c(-3,-2,0,2,4,6)) +
