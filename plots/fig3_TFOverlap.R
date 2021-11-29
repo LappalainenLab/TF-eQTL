@@ -134,7 +134,7 @@ overlap_sum %>%
             size=3) +
   facet_wrap(~data_type_lab, scales='free_y', nrow=3) +
   theme_classic() +
-  scale_color_manual(values=c('tomato2','gold2','steelblue3','darkorchid3')) +
+  scale_color_manual(values=c('steelblue3','tomato2','gold2','darkorchid3')) +
   theme(strip.text = element_text(hjust=0),
         legend.position = 'none') +
   ylab("Overlap Enrichment") +
@@ -162,7 +162,7 @@ overlap_sum %>%
                 label=p_lab),
             size=3) +
   theme_classic() +
-  scale_color_manual(values=c('tomato2','gold2','steelblue3','darkorchid3')) +
+  scale_color_manual(values=c('steelblue3','tomato2','gold2','darkorchid3')) +
   theme(strip.text = element_text(hjust=0),
         legend.position = 'none') +
   ylab("ChIPseq Enrichment") +
