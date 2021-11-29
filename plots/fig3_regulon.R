@@ -33,8 +33,8 @@ reg_fi_tsts_bycat %>%
   geom_point(data=reg_fi_tsts_overall %>% filter(reg_lab!='curated'),
              aes(reg_lab,fi_log_OR),
              size=2) +
-  scale_color_gradient2(low='gray',mid='darkorchid4',high='darkorchid4',
-                        midpoint=3) +
+  scale_color_gradientn(colors=c('gray','darkorchid4','darkorchid4','darkorchid4'),
+                        limits=c(0,10)) +
   theme_classic() +
   scale_y_continuous(labels=c('-Inf',-2,0,2,4,6),
                      breaks=c(-3,-2,0,2,4,6)) +
