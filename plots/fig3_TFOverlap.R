@@ -59,7 +59,7 @@ overlap_sum = do.call('rbind', lapply(perm_files, function(filei) {
                               levels = c('chip','motif','both')))
 }))  %>%
   mutate(list_lab = factor(ifelse(list == 'cross_expr', 'Cross\nExpr',
-                             ifelse(list=='cross_prot','Cross\nProt',
+                             ifelse(list=='cross_prot_filt','Cross\nProt',
                                     ifelse(list=='within','\nWithin\n',
                                            ifelse(list=='multi_or_cross','2+ Within\nor\nWithin + Cross','')))),
                       levels=c('\nWithin\n','Cross\nExpr','Cross\nProt','2+ Within\nor\nWithin + Cross')),
