@@ -1,0 +1,168 @@
+---
+title: "Supplemental figures"
+output: html_notebook
+---
+
+```{r, setup, include=FALSE}
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(forcats)
+
+knitr::opts_knit$set(root.dir = "~/projects/MANUSCRIPT_revisions/")
+
+theme_set(theme_bw())
+
+```
+
+SFig 5
+
+```{r}
+
+all_vars = read.table("data_tables/tf_eqtls/all.fdr05.txt",
+                      header=TRUE,sep='\t')
+sig_vars = read.table("data_tables/tf_eqtls/all.fdr05.sig_eqtls.txt",
+                      header=TRUE,sep='\t')
+
+merge_vars = merge(all_vars %>% 
+                    select(tissue,variant_id,phenotype_id,tf),
+                  sig_vars %>% 
+                    select(tissue=tiss,variant_id=var,phenotype_id=gene,tf) %>%
+                    mutate(sig_eqtl=TRUE),
+                  by = c('tissue','variant_id','phenotype_id','tf'),
+                  all=TRUE) %>%
+  mutate(sig_eqtl = ifelse(is.na(sig_eqtl), FALSE, sig_eqtl))
+
+merge_var_stats = merge_vars %>% 
+  group_by(tissue) %>% 
+  summarize(n=n(),
+            n_sig = sum(sig_eqtl),
+            p_sig = sum(sig_eqtl) / n)
+
+merge_vars %>%
+  mutate(tissue = factor(tissue, 
+                         levels=as.character( merge_var_stats %>% 
+                                               arrange(n) %>% pull(tissue)))) %>%
+  ggplot(aes(tissue)) +
+  geom_bar(aes(fill=sig_eqtl)) +
+  scale_fill_manual(values=c('gray','blue'))  +
+  geom_text(data=merge_var_stats,
+            aes(tissue, n+3000, 
+                label=paste0(round(p_sig,2)*100,"%")),
+            size=3) +
+  theme(axis.text.x = element_text(angle=60, hjust=1, size=8)) +
+  ylab('TF-eQTLs')
+
+tiss_info = read.table("data_tables/info_tables/tissue_info.txt",
+                       header=TRUE, sep='\t')
+
+stats_tiss = merge_var_stats %>%
+  merge(tiss_info,
+        by.x='tissue',by.y='TISSUE_NAME') 
+stats_tiss %>%
+  ggplot(aes(SAMPLE_COUNT, n_sig)) +
+  geom_point(col=stats_tiss$TISSUE_RCOL) +
+  geom_text(aes(label=ifelse(n_sig > 10000, as.character(tissue), '')),
+            hjust=0, size=3) +
+  xlim(NA,750) +
+  xlab("Sample count") +
+  ylab("Filtered TF-eQTLs")
+ggsave("plots/sfig5.pdf")
+
+```
+
+SFig 6
+
+```{r, fig.width=4, fig.height=4}
+
+
+load("~/data/CTieQTLS/celltype_estimates/xCell_tpm.v8_DGN_res_alpha05.Rda")
+load("~/data/CTieQTLS/celltype_estimates/xCell_tpm.v8_res_all.tissues_res.a.Rda")
+load("~/data/CTieQTLS/xCell_tpm.v8_res_all.tissues_res.rt.Rda")
+row.names(res.rt) <- row.names(res.a)
+
+sample_data = read.table("~/data/GTEx_Analysis_v8/sample_annotations/GTEx_Analysis_2017-06-05_v8_Annotations_SampleAttributesDS.txt",
+           header=TRUE, sep='\t', fill = TRUE) %>%
+  filter(SMAFRZE=='RNASEQ') %>%
+  mutate(SMTSD = as.character(SMTSD)) %>%
+  mutate(SMTSD = replace(SMTSD, 
+                         SMTSD == 'Cells - Cultured fibroblasts', 
+                         "Cells - Transformed fibroblasts"))
+tiss_info = read.table("data_tables/info_tables/tissue_info.txt",
+                       header=TRUE, sep='\t')
+sample_data_annot = merge(sample_data %>% select(SAMPID,SMTSD),
+                          tiss_info %>% select(SMTSD,TISSUE_NAME,TISSUE_RCOL,TISSUE_ABBRV),
+                          by='SMTSD')
+
+ct_annot = merge(res.t,
+                 sample_data_annot,
+                 by.x='row.names',
+                 by.y='SAMPID')
+ct_stats = ct_annot %>%
+  pivot_longer(cols=seq(2,65), names_to = 'cell_type', values_to = 'estimate') %>%
+  group_by(TISSUE_NAME, cell_type, TISSUE_RCOL, TISSUE_ABBRV) %>%
+  summarize(mean=mean(estimate),
+            var=var(estimate)) %>%
+  filter(TISSUE_NAME %in% unique(all_vars$tissue))
+
+ct_stats %>%
+  ggplot(aes(mean, var)) +
+  geom_point(col=ct_stats$TISSUE_RCOL) +
+  geom_text(aes(label=ifelse(var>.03,
+                             as.character(cell_type),'')),
+            hjust=0,vjust=0,size=3) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle=45, hjust=1),
+        legend.position = 'none')
+ggsave("plots/sfig6a.pdf")
+
+ct_stats %>%
+  filter(!(cell_type %in% c('aDC','iDC'))) %>%
+  ggplot(aes(mean, var)) +
+  geom_point(col=ct_stats %>% filter(!(cell_type %in% c('aDC','iDC'))) %>% pull(TISSUE_RCOL)) +
+  geom_text(aes(label=ifelse(var>.03,
+                             paste(TISSUE_NAME,'/', as.character(cell_type)),'')),
+            hjust=0,vjust=0,size=3) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle=45, hjust=1),
+        legend.position = 'none') +
+  xlim(NA,1.5)
+ggsave("plots/sfig6b.pdf")
+
+```
+
+SFig 7
+```{r, fig.width=4, fig.height=3}
+sig_vars = read.table("data_tables/tf_eqtls/all.16tiss.fdr05.sig_eqtls.txt",
+                      header=TRUE,sep='\t')
+
+sig_vars %>% 
+  unite(tf_gene, tf, gene) %>%
+  group_by(tf_gene) %>%
+  summarise(count=n()) %>%
+  ggplot(aes(count)) +
+  geom_histogram(binwidth=.99) +
+  xlab('Tissues with TF-eQTL') +
+  ylab('TF-eQTLs')
+ggsave("plots/sfig7.pdf")
+
+sig_vars %>% 
+  unite(tf_gene, tf, gene) %>%
+  group_by(tf_gene) %>%
+  summarise(count=n()) %>%
+  filter(count>1) %>% nrow()
+```
+
+SFig 10
+
+```{r}
+
+annot_file = "data/gtex/v8/regulatory_build/WGS_Feature_overlap_collapsed_VEP.txt.gz"
+
+
+
+```
+
+SFig 11
+
